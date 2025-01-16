@@ -1,17 +1,338 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE html>
 <html>
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2487.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
-    span.s1 {font-kerning: none}
-  </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Sentence Builder</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            padding: 10px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .game-container {
+            width: 95%;
+            max-width: 600px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            color: #2196F3;
+            margin-bottom: 20px;
+        }
+
+        .modal-score {
+            font-size: 20px;
+            margin: 15px 0;
+        }
+
+        .play-again-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .level-display, .rounds-display {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: #2196F3;
+            font-weight: bold;
+        }
+
+        .target-number {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #2196F3;
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .equation-display {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            margin: 15px 0;
+            min-height: 40px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: clamp(5px, 2vw, 10px);
+            margin: 15px 0;
+        }
+
+        .number-btn {
+            padding: clamp(10px, 3vw, 15px);
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .number-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .number-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            color: #666;
+            margin: 10px 0;
+            min-height: 20px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+        }
+
+        .score-display {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .correct {
+            animation: correct 0.5s ease;
+            background-color: #4CAF50;
+        }
+
+        .wrong {
+            animation: wrong 0.5s ease;
+            background-color: #f44336;
+        }
+
+        @keyframes correct {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes wrong {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 10px;
+            }
+        }
+    </style>
 </head>
 <body>
-<p class="p1"><span class="s1">netlify.toml</span></p>
+    <div class="game-container">
+        <h1>Number Sentence Builder</h1>
+        <div class="game-header">
+            <div class="level-display">Level: <span id="currentLevel">1</span>/20</div>
+            <div class="rounds-display">Round: <span id="currentRound">1</span>/3</div>
+        </div>
+        <div class="target-number">Target: <span id="target">?</span></div>
+        <div class="equation-display" id="equation"></div>
+        <div class="message" id="message"></div>
+        <div class="number-grid" id="numberGrid"></div>
+        <div class="score-display">
+            <div>Total Score: <span id="totalScore">0</span></div>
+        </div>
+    </div>
+
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <div class="modal-title">Game Complete!</div>
+            <div class="modal-score">Final Score: <span id="finalScore">0</span></div>
+            <button class="play-again-btn" onclick="location.reload()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class AdditionGame {
+            constructor() {
+                this.currentLevel = 1;
+                this.currentRound = 1;
+                this.totalScore = 0;
+                this.equation = [];
+                this.target = 0;
+                this.usedNumbers = new Set();
+                
+                this.initializeGame();
+            }
+
+            initializeGame() {
+                this.generateTarget();
+                this.createNumberButtons();
+                this.updateDisplay();
+            }
+
+            generateTarget() {
+                const maxTarget = Math.min(10 + this.currentLevel, 20);
+                const minTarget = Math.max(5, Math.floor(this.currentLevel/2));
+                this.target = Math.floor(Math.random() * (maxTarget - minTarget + 1)) + minTarget;
+                document.getElementById('target').textContent = this.target;
+            }
+
+            createNumberButtons() {
+                const grid = document.getElementById('numberGrid');
+                grid.innerHTML = '';
+                const numberRange = Math.min(10 + Math.floor(this.currentLevel/2), 15);
+                
+                for (let i = 1; i <= numberRange; i++) {
+                    const button = document.createElement('button');
+                    button.textContent = i;
+                    button.className = 'number-btn';
+                    button.onclick = () => this.addNumber(i);
+                    grid.appendChild(button);
+                }
+            }
+
+            addNumber(num) {
+                if (this.usedNumbers.has(num)) return;
+                
+                this.equation.push(num);
+                this.usedNumbers.add(num);
+                
+                if (this.equation.length === 2) {
+                    setTimeout(() => this.checkAnswer(), 500);
+                }
+                
+                this.updateDisplay();
+            }
+
+            checkAnswer() {
+                const sum = this.equation[0] + this.equation[1];
+                const isCorrect = sum === this.target;
+                
+                const equationDisplay = document.getElementById('equation');
+                equationDisplay.textContent = `${this.equation[0]} + ${this.equation[1]} = ${sum}`;
+                equationDisplay.className = `equation-display ${isCorrect ? 'correct' : 'wrong'}`;
+                
+                if (isCorrect) {
+                    this.totalScore += 10;
+                    this.showMessage('Correct! +10 points');
+                } else {
+                    this.showMessage('Try again!');
+                }
+                
+                setTimeout(() => {
+                    if (this.currentRound < 3) {
+                        this.currentRound++;
+                        this.resetRound();
+                    } else if (this.currentLevel < 20) {
+                        this.currentLevel++;
+                        this.currentRound = 1;
+                        this.resetRound();
+                    } else {
+                        this.endGame();
+                    }
+                }, 1000);
+            }
+
+            resetRound() {
+                this.equation = [];
+                this.usedNumbers.clear();
+                this.generateTarget();
+                document.getElementById('equation').className = 'equation-display';
+                this.updateDisplay();
+                this.showMessage('');
+            }
+
+            endGame() {
+                const modal = document.getElementById('gameOverModal');
+                document.getElementById('finalScore').textContent = this.totalScore;
+                modal.style.display = 'flex';
+            }
+
+            updateDisplay() {
+                document.getElementById('equation').textContent = this.equation.join(' + ');
+                document.getElementById('totalScore').textContent = this.totalScore;
+                document.getElementById('currentLevel').textContent = this.currentLevel;
+                document.getElementById('currentRound').textContent = this.currentRound;
+                
+                const buttons = document.querySelectorAll('.number-btn');
+                buttons.forEach(button => {
+                    const num = parseInt(button.textContent);
+                    button.disabled = this.usedNumbers.has(num);
+                });
+            }
+
+            showMessage(msg) {
+                document.getElementById('message').textContent = msg;
+            }
+        }
+
+        // Start the game when the page loads
+        window.onload = () => new AdditionGame();
+    </script>
 </body>
 </html>
